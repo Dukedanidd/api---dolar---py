@@ -1,0 +1,5 @@
+# Requests es una libreria para hacer peticiones HTTP
+pip install requests
+
+# BeautifulSoup es una libreria para hacer scraping de datos
+pip install beautifulsoup4
