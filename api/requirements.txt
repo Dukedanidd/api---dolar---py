@@ -1,0 +1,16 @@
+# flask es una libreria para hacer web services
+pip install flask
+
+# requests es una libreria para hacer peticiones HTTP
+pip install requests
+
+# yfinance es una libreria para hacer scraping de datos de yahoo finance
+pip install yfinance
+
+# numpy es una libreria para hacer operaciones matematicas
+pip install numpy
+
+# os es una libreria para interactuar con el sistema operativo
+pip install os
+
+

@@ -1,0 +1,18 @@
+# joblib es una libreria para guardar y cargar modelos
+pip install joblib
+
+# numpy es una libreria para hacer operaciones matematicas
+pip install numpy
+
+# yfinance es una libreria para hacer scraping de datos de yahoo finance
+pip install yfinance
+
+# pandas es una libreria para hacer data analysis
+pip install pandas
+
+# scikit-learn es una libreria para hacer machine learning
+pip install scikit-learn
+
+# matplotlib es una libreria para hacer graficas
+pip install matplotlib
+
