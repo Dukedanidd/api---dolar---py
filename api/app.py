@@ -3,7 +3,6 @@ import joblib
 from scraper.scraper import scrap_values  # Importamos el scrapper desde la carpeta scrapper
 import os
 import numpy as np
-import pandas as pd
 import yfinance as yf
 
 app = Flask(__name__)
