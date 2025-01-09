@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 import joblib
 import matplotlib.pyplot as plt
 from scraper.scraper import scrap_values
+import os
 
 # Descargar los datos históricos de USD/MXN
 symbol = "USDMXN=X"
@@ -17,7 +18,7 @@ df = pd.DataFrame(data)
 data_close = df['Close']
 
 # Definir el tamaño de la ventana una sola vez al inicio
-window_size = 1000
+window_size = 900
 
 # Obtener los valores actuales del scraper
 compra, venta = scrap_values()
@@ -82,6 +83,38 @@ if compra_value is not None and venta_value is not None:
     print("\nPredicción usando datos históricos y valores del scraper:")
     print(f"Predicción para el siguiente día: {float(next_day_pred[0]):.2f}")
     print(f"Valores actuales del scraper - Compra: {compra}, Venta: {venta}")
+
+    # Guardar el modelo aquí, antes de la visualización
+    try:
+        # Obtener el directorio actual donde está train_model.py
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        print(f"Directorio actual: {current_dir}")  # Debug
+        
+        # Definir la ruta del modelo
+        model_path = os.path.join(current_dir, 'modelo.pkl')
+        print(f"Intentando guardar modelo en: {model_path}")  # Debug
+        
+        # Guardar el modelo
+        joblib.dump(model, model_path)
+        print(f"Modelo guardado exitosamente en: {model_path}")
+        
+        # Verificar si el archivo existe
+        if os.path.exists(model_path):
+            print(f"Verificación: El archivo existe y su tamaño es: {os.path.getsize(model_path)} bytes")
+        else:
+            print("Verificación: El archivo NO existe después de intentar guardarlo")
+
+        # Guardar el window_size
+        config = {'window_size': window_size}
+        config_path = os.path.join(current_dir, 'config.pkl')
+        joblib.dump(config, config_path)
+        
+        print(f"Modelo y configuración guardados exitosamente")
+
+    except Exception as e:
+        print(f"Error al guardar el modelo: {str(e)}")
+        print(f"Tipo de error: {type(e)}")  # Debug
+
 else:
     print("\nNo se pudo hacer la predicción con valores del scraper")
 
@@ -98,7 +131,4 @@ plt.show()
 # Guardar los datos de prueba y predicciones
 df_test = pd.DataFrame({'Real': y_test, 'Predicción': y_pred})
 df_test.to_csv('modelo/datos_prueba.csv', index=False)
-
-# Guardar el modelo entrenado
-joblib.dump(model, 'modelo/modelo.pkl')
 

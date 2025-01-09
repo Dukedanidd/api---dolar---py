@@ -2,59 +2,66 @@ from flask import Flask, jsonify
 import joblib
 from scraper.scraper import scrap_values  # Importamos el scrapper desde la carpeta scrapper
 import os
+import numpy as np
+import pandas as pd
+import yfinance as yf
 
 app = Flask(__name__)
 
 # Obtener la ruta absoluta del directorio actual
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# Construir la ruta al modelo
-model_path = os.path.join(os.path.dirname(current_dir), 'modelo', 'modelo.pkl')
-# Cargar el modelo
+parent_dir = os.path.dirname(current_dir)
+model_path = os.path.join(parent_dir, 'modelo', 'modelo.pkl')
+config_path = os.path.join(parent_dir, 'modelo', 'config.pkl')
+
+# Cargar el modelo y la configuración
 model = joblib.load(model_path)
+config = joblib.load(config_path)
+window_size = config['window_size']
 
 # Endpoint para hacer predicción
 @app.route('/predict', methods=['GET'])
 def predict():
-    # Scrapeamos los valores de compra y venta
+    # Scrapeamos los valores actuales
     compra, venta = scrap_values()
-    print(f"Valores originales - Compra: '{compra}', Venta: '{venta}'")  # Debug log
+    print(f"Valores originales - Compra: '{compra}', Venta: '{venta}'")
     
     if compra is None or venta is None:
         return jsonify({'error': 'No se pudieron obtener los valores de compra y venta'}), 400
 
-    # Convertir los valores a formato numérico
     try:
-        # Limpiamos los valores de cualquier carácter especial
-        compra = compra.replace('$', '').replace(',', '').replace(' ', '')
-        venta = venta.replace('$', '').replace(',', '').replace(' ', '')
-        
-        print(f"Valores limpiados - Compra: '{compra}', Venta: '{venta}'")  # Debug log
-        
-        compra = float(compra)
-        venta = float(venta)
-        
-        print(f"Valores convertidos - Compra: {compra}, Venta: {venta}")  # Debug log
-    except (ValueError, AttributeError) as e:
-        print(f"Error en la conversión: {str(e)}")  # Debug log
+        # Limpiamos los valores
+        compra = float(compra.replace('$', '').replace(',', '').replace(' ', ''))
+        venta = float(venta.replace('$', '').replace(',', '').replace(' ', ''))
+
+        # Obtener datos históricos
+        symbol = "USDMXN=X"
+        data = yf.download(symbol, start="2020-01-01", end="2025-01-01")
+        data_close = data['Close']
+
+        # Preparar el input como se hizo en el entrenamiento
+        latest_data = np.concatenate([
+            data_close[-window_size:].values.reshape(-1),  # últimos 1000 valores
+            [compra, venta]  # valores actuales
+        ])
+
+        # Obtener la predicción
+        prediccion = model.predict([latest_data])
+
         return jsonify({
-            'error': 'Los valores de compra y venta no son válidos',
-            'valores_recibidos': {
+            'valores_actuales': {
                 'compra': compra,
                 'venta': venta
-            }
+            },
+            'prediccion': float(prediccion[0])
+        })
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({
+            'error': 'Error al procesar la predicción',
+            'detalle': str(e)
         }), 400
-
-    # Hacer la predicción usando el modelo
-    prediction = model.predict([[compra, venta]])
-    print(f"Predicción: {prediction[0]}")  # Debug log
-
-    return jsonify({
-        'prediccion_siguiente': float(prediction[0]),
-        'valores_actuales': {
-            'compra': compra,
-            'venta': venta
-        }
-    })
 
 # Ruta raíz
 @app.route('/', methods=['GET'])
